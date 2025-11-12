@@ -13,6 +13,19 @@ API REST que recebe um projeto e uma lista de perfis de freelancers, retornando 
 - **Justificativa** detalhada da análise
 - **Ordenação** automática por melhor match
 
+## 🌐 API em Produção
+
+**A API está deployada e disponível online. Use diretamente sem instalação:**
+
+**URL Base:** https://skillsync-ai-api.onrender.com
+
+**Acesse:**
+- 📚 [Documentação Interativa](https://skillsync-ai-api.onrender.com/docs) - Teste os endpoints diretamente no navegador
+- 🔍 [Health Check](https://skillsync-ai-api.onrender.com/health) - Verifica se a API está online
+- 🤖 [Gerar Match](https://skillsync-ai-api.onrender.com/gerar-match) - Endpoint principal de matchmaking
+
+**⚠️ Importante:** No plano gratuito do Render, a primeira requisição após inatividade pode levar 30-60 segundos (serviço "acorda").
+
 ## 🏗️ Arquitetura
 
 ```
@@ -65,13 +78,15 @@ GOOGLE_AI_KEY=sua_chave_aqui
 
 Obtenha sua chave em: https://makersuite.google.com/app/apikey
 
-## 🚀 Execução
+## 🚀 Execução Local (Opcional)
+
+Se preferir rodar localmente:
 
 ```bash
 python main.py
 ```
 
-A API estará disponível em:
+A API local estará disponível em:
 - **API**: http://127.0.0.1:8000
 - **Documentação**: http://127.0.0.1:8000/docs
 - **Health Check**: http://127.0.0.1:8000/health
@@ -124,27 +139,20 @@ Analisa compatibilidade entre projeto e perfis usando IA Generativa.
 
 ## 🔗 Integração com API .NET
 
-A API .NET deve fazer uma requisição HTTP POST:
+A API .NET deve fazer uma requisição HTTP POST para a API em produção:
 
 ```csharp
 var client = new HttpClient();
 var response = await client.PostAsJsonAsync(
-    "http://localhost:8000/gerar-match", 
+    "https://skillsync-ai-api.onrender.com/gerar-match", 
     request
 );
 var matches = await response.Content.ReadFromJsonAsync<MatchResponse>();
 ```
 
-## 🌐 Deploy
+**URL de Produção:** `https://skillsync-ai-api.onrender.com`
 
-### Render.com
-
-1. Conecte seu repositório GitHub
-2. Crie um novo **Web Service**
-3. Configure:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables**: Adicione `GOOGLE_AI_KEY`
+**Para desenvolvimento local**, use: `http://localhost:8000`
 
 ## 📝 Estrutura do Projeto
 
