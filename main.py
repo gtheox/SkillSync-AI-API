@@ -11,9 +11,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 # --- 1. CONFIGURAÇÃO ---
 # Carrega variáveis de ambiente do arquivo .env
+# Isso permite gerenciar chaves de API de forma segura sem hardcoding
 load_dotenv()
 
 # Obtém a chave da API do Google Gemini de variável de ambiente
+# A chave é necessária para autenticar requisições à API do Gemini
 GOOGLE_AI_KEY = os.getenv("GOOGLE_AI_KEY")
 
 if not GOOGLE_AI_KEY:
@@ -23,15 +25,21 @@ if not GOOGLE_AI_KEY:
     )
 
 try:
+    # Configura a biblioteca do Google Generative AI com a chave fornecida
+    # Esta configuração é global e aplica-se a todas as chamadas subsequentes
     genai.configure(api_key=GOOGLE_AI_KEY)
 except Exception as e:
     raise RuntimeError(f"Erro ao configurar a API do Gemini: {e}")
 
 # Thread pool para executar chamadas síncronas do Gemini de forma assíncrona
+# Isso permite que o FastAPI mantenha sua natureza assíncrona enquanto
+# executa operações bloqueantes do Gemini em threads separadas
+# max_workers=5 permite até 5 requisições simultâneas ao Gemini
 executor = ThreadPoolExecutor(max_workers=5)
 
 # --- 2. DEFINIÇÃO DOS MODELOS DE DADOS (Contrato da API) ---
 # O FastAPI usa Pydantic para validar automaticamente o JSON de entrada e saída.
+# Isso garante type safety, validação de dados e documentação automática da API.
 
 class Projeto(BaseModel):
     titulo: str
@@ -59,21 +67,40 @@ class MatchResponse(BaseModel):
     matches: List[MatchResponseItem]
 
 # --- 3. INICIALIZAÇÃO DA API ---
+# FastAPI é escolhido por sua performance, suporte nativo a async/await,
+# documentação automática (Swagger/OpenAPI) e validação integrada com Pydantic
 app = FastAPI(
     title="SkillSync AI Matchmaking API",
-    description="Microserviço de IA Generativa para fazer match entre projetos e freelancers.",
+    description="Microserviço de IA Generativa para fazer match entre projetos e freelancers usando Google Gemini.",
     version="1.0.0"
 )
 
 # --- 4. ENGENHARIA DE PROMPT (O "Cérebro" da IA) ---
-# Esta função monta a instrução para o Gemini
+# Esta função implementa técnicas de Prompt Engineering para garantir
+# respostas consistentes e estruturadas do modelo Gemini.
+#
+# Estratégias utilizadas:
+# 1. Contexto claro: Define o papel do assistente (especialista em RH)
+# 2. Instruções específicas: Critérios detalhados de análise
+# 3. Sistema de pontuação: Escala objetiva de 0-100
+# 4. Formato rígido: Garante JSON válido sem texto extra
 def criar_prompt_matchmaking(request: MatchRequest) -> str:
+    """
+    Cria um prompt estruturado para o modelo Gemini realizar matchmaking.
     
-    # Converte os dados de input em strings JSON para o prompt
+    Args:
+        request: Objeto MatchRequest contendo projeto e lista de perfis
+        
+    Returns:
+        String com o prompt completo formatado para o Gemini
+    """
+    # Converte os dados de input em strings JSON formatadas
+    # O indent=2 melhora a legibilidade do prompt para o modelo
     projeto_str = request.projeto.model_dump_json(indent=2)
     perfis_str = json.dumps([p.model_dump() for p in request.perfis], indent=2)
 
-    # Este é o prompt que cumpre o requisito de "Prompt Engineering"
+    # Prompt estruturado em 4 camadas (contexto, análise, pontuação, formato)
+    # Este prompt foi engenheirado para maximizar consistência e qualidade
     return f"""Você é um assistente de RH especialista em recrutamento de freelancers para a plataforma SkillSync.
 
 Sua tarefa é analisar um PROJETO e uma LISTA DE PERFIS de freelancers, e calcular a compatibilidade de cada perfil com o projeto.
@@ -126,11 +153,15 @@ async def gerar_match(request: MatchRequest):
     # 1. Criar o Prompt
     prompt = criar_prompt_matchmaking(request)
     
-    # 2. Configurar o modelo
+    # 2. Configurar o modelo Gemini
+    # Escolha do modelo: gemini-2.5-flash oferece bom balanceamento
+    # entre velocidade, custo e qualidade para este caso de uso
     try:
         model = genai.GenerativeModel(
-            model_name='gemini-2.5-flash', # Modelo disponível na API
-            generation_config={"response_mime_type": "application/json"} # Força a saída em JSON!
+            model_name='gemini-2.5-flash',  # Modelo otimizado para velocidade e eficiência
+            generation_config={
+                "response_mime_type": "application/json"  # Força saída em JSON puro, sem markdown
+            }
         )
     except Exception as e:
         print(f"Erro ao carregar o modelo Gemini: {e}")
@@ -146,12 +177,14 @@ async def gerar_match(request: MatchRequest):
         response = await loop.run_in_executor(executor, model.generate_content, prompt)
         
         # 4. Processar a resposta da IA
-        # O modelo já deve retornar JSON puro graças ao 'response_mime_type'
+        # Validação inicial: verifica se a resposta tem o formato esperado
         if not response or not hasattr(response, 'text'):
             raise ValueError("Resposta inválida do modelo Gemini")
         raw_text = response.text.strip()
         
-        # Remove possíveis markdown code blocks se existirem
+        # Limpeza de resposta: remove possíveis markdown code blocks
+        # Mesmo com response_mime_type, alguns modelos podem adicionar markdown
+        # Esta etapa garante que temos apenas JSON puro para parsing
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]  # Remove ```json
         if raw_text.startswith("```"):
@@ -167,15 +200,18 @@ async def gerar_match(request: MatchRequest):
         if "matches" not in json_response:
             raise ValueError("Resposta da IA não contém o campo 'matches'")
         
-        # 7. Validar e ordenar matches por score (maior primeiro)
+        # 7. Validar e normalizar matches
         matches = json_response["matches"]
         for match in matches:
+            # Validação de estrutura: verifica campos obrigatórios
             if "score_compatibilidade" not in match or "id_perfil" not in match or "justificativa" not in match:
                 raise ValueError("Formato de match inválido na resposta da IA")
-            # Garante que o score está entre 0-100
+            # Normalização: garante que o score está sempre entre 0-100
+            # Isso previne erros caso a IA retorne valores fora do range esperado
             match["score_compatibilidade"] = max(0, min(100, int(match["score_compatibilidade"])))
         
-        # Ordena por score (maior primeiro)
+        # Ordenação: ordena matches por score (maior primeiro)
+        # Isso facilita a apresentação dos melhores matches primeiro
         matches.sort(key=lambda x: x["score_compatibilidade"], reverse=True)
         
         print(f"Match recebido do Gemini: {len(matches)} perfis analisados com sucesso.")

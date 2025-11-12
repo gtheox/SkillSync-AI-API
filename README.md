@@ -34,13 +34,72 @@ App Mobile (React Native) → API .NET → API de IA (Este microserviço)
 
 **Importante**: Este serviço **NÃO** se conecta ao banco de dados. É uma API "pura" que processa texto e retorna JSON.
 
+## 🤖 Arquitetura da IA
+
+### Modelo Escolhido: Google Gemini 2.5 Flash
+
+**Razão da escolha:**
+- **Performance**: Balanceamento ideal entre velocidade e qualidade de resposta
+- **Capacidade JSON**: Suporte nativo para geração de JSON estruturado via `response_mime_type`
+- **Custo**: Modelo eficiente para uso em produção
+- **Confiabilidade**: Respostas consistentes e previsíveis
+
+**Configuração:**
+```python
+model = genai.GenerativeModel(
+    model_name='gemini-2.5-flash',
+    generation_config={"response_mime_type": "application/json"}
+)
+```
+
+### Prompt Engineering
+
+O prompt foi estruturado em **4 camadas** para garantir resultados consistentes:
+
+1. **Contexto e Papel** (linhas 77-79)
+   - Define o assistente como especialista em RH
+   - Estabelece o contexto da plataforma SkillSync
+
+2. **Instruções de Análise** (linhas 87-92)
+   - Critérios específicos de avaliação:
+     - Compatibilidade de habilidades
+     - Relevância do título profissional
+     - Adequação do resumo/experiência
+     - Alinhamento geral com o projeto
+
+3. **Sistema de Pontuação** (linhas 94-99)
+   - Escala clara e objetiva de 0-100
+   - Faixas bem definidas para cada nível de compatibilidade
+   - Facilita a interpretação dos resultados
+
+4. **Formato de Resposta** (linhas 103-113)
+   - Instruções rígidas para garantir JSON válido
+   - Prevenção de markdown ou texto extra
+   - Validação de campos obrigatórios
+
+### Processamento Assíncrono
+
+A API utiliza `ThreadPoolExecutor` para executar chamadas síncronas do Gemini de forma assíncrona, garantindo:
+- **Performance**: Não bloqueia outras requisições
+- **Escalabilidade**: Suporta múltiplas requisições simultâneas
+- **Eficiência**: Aproveitamento otimizado de recursos
+
+### Validação e Tratamento de Erros
+
+- **Validação de Entrada**: Pydantic valida automaticamente o formato dos dados
+- **Validação de Saída**: Verificação de estrutura JSON e campos obrigatórios
+- **Limpeza de Resposta**: Remoção automática de markdown code blocks
+- **Normalização**: Garantia de scores entre 0-100
+- **Ordenação**: Matches ordenados por score (maior primeiro)
+
 ## 🛠️ Tecnologias
 
-- Python 3.8+
-- FastAPI
-- Google Generative AI (Gemini)
-- Pydantic
-- python-dotenv
+- **Python 3.8+** - Linguagem principal
+- **FastAPI** - Framework web moderno e assíncrono para APIs REST
+- **Google Generative AI (Gemini 2.5 Flash)** - Modelo de IA Generativa
+- **Pydantic** - Validação de dados e serialização
+- **python-dotenv** - Gerenciamento de variáveis de ambiente
+- **Uvicorn** - Servidor ASGI de alta performance
 
 ## 📦 Instalação
 
