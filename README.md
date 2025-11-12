@@ -1,0 +1,198 @@
+# SkillSync AI Matchmaking API
+
+## 📋 Sobre o Projeto
+
+Microserviço de **IA Generativa** do projeto **SkillSync**, desenvolvido para a disciplina de **Disruptive Architectures: IoT, IoB & Generative IA**.
+
+Utiliza o modelo **Google Gemini** para realizar matchmaking inteligente entre projetos e perfis de freelancers, analisando compatibilidade de habilidades, experiência e título profissional.
+
+## 🎯 Objetivo
+
+API REST que recebe um projeto e uma lista de perfis de freelancers, retornando análise de compatibilidade gerada por IA:
+- **Score de compatibilidade** (0-100) para cada perfil
+- **Justificativa** detalhada da análise
+- **Ordenação** automática por melhor match
+
+## 🏗️ Arquitetura
+
+```
+App Mobile (React Native) → API .NET → API de IA (Este microserviço)
+```
+
+**Importante**: Este serviço **NÃO** se conecta ao banco de dados. É uma API "pura" que processa texto e retorna JSON.
+
+## 🛠️ Tecnologias
+
+- Python 3.8+
+- FastAPI
+- Google Generative AI (Gemini)
+- Pydantic
+- python-dotenv
+
+## 📦 Instalação
+
+### 1. Criar ambiente virtual
+
+**Mac/Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Windows:**
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 2. Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configurar chave da API
+
+Crie o arquivo `.env` a partir do exemplo:
+```bash
+cp .env.example .env
+```
+
+Edite o `.env` e adicione sua chave:
+```
+GOOGLE_AI_KEY=sua_chave_aqui
+```
+
+Obtenha sua chave em: https://makersuite.google.com/app/apikey
+
+## 🚀 Execução
+
+```bash
+python main.py
+```
+
+A API estará disponível em:
+- **API**: http://127.0.0.1:8000
+- **Documentação**: http://127.0.0.1:8000/docs
+- **Health Check**: http://127.0.0.1:8000/health
+
+## 📡 Endpoints
+
+### GET /health
+
+Verifica se a API está online.
+
+**Resposta:**
+```json
+{"status": "ok"}
+```
+
+### POST /gerar-match
+
+Analisa compatibilidade entre projeto e perfis usando IA Generativa.
+
+**Request:**
+```json
+{
+  "projeto": {
+    "titulo": "Desenvolvimento de App Mobile",
+    "descricao": "Preciso de um desenvolvedor React Native..."
+  },
+  "perfis": [
+    {
+      "id_perfil": 1,
+      "titulo_profissional": "Desenvolvedor Mobile Senior",
+      "resumo": "5 anos de experiência em React Native...",
+      "habilidades": ["React Native", "JavaScript", "TypeScript"]
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "matches": [
+    {
+      "id_perfil": 1,
+      "score_compatibilidade": 95,
+      "justificativa": "Perfil altamente compatível..."
+    }
+  ]
+}
+```
+
+## 🔗 Integração com API .NET
+
+A API .NET deve fazer uma requisição HTTP POST:
+
+```csharp
+var client = new HttpClient();
+var response = await client.PostAsJsonAsync(
+    "http://localhost:8000/gerar-match", 
+    request
+);
+var matches = await response.Content.ReadFromJsonAsync<MatchResponse>();
+```
+
+## 🌐 Deploy
+
+**📚 Tutorial completo**: Veja [DEPLOY_TUTORIAL.md](./DEPLOY_TUTORIAL.md) para instruções detalhadas.
+
+### Render.com (Recomendado - Gratuito)
+
+1. **Crie conta no Render.com**: https://render.com
+2. **Conecte seu repositório GitHub**
+3. **Crie um novo Web Service** com:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Environment Variables**: Adicione `GOOGLE_AI_KEY` com sua chave
+4. **Deploy automático**: Render fará o deploy automaticamente
+
+**URL de exemplo após deploy:**
+```
+https://skillsync-ai-api.onrender.com
+```
+
+**⚠️ Nota**: No plano gratuito do Render, o serviço "dorme" após 15min de inatividade. A primeira requisição pode demorar 30-60s para "acordar".
+
+### Alternativas
+
+- **Railway**: https://railway.app (não "dorme", mais rápido)
+- **Fly.io**: https://fly.io (boa performance, requer CLI)
+
+## 📝 Estrutura do Projeto
+
+```
+IA/
+├── main.py              # Código principal da API
+├── requirements.txt     # Dependências
+├── .env.example        # Exemplo de variáveis
+├── .env                # Suas variáveis (não commitado)
+├── test_api.py         # Script de teste
+└── README.md           # Este arquivo
+```
+
+## ⚠️ Troubleshooting
+
+### Erro: "GOOGLE_AI_KEY não encontrada"
+- Verifique se o arquivo `.env` existe
+- Confirme que a chave está no formato: `GOOGLE_AI_KEY=sua_chave` (sem espaços)
+
+### Erro: "Address already in use"
+- A porta 8000 está em uso
+- Encerre o processo: `lsof -ti:8000 | xargs kill`
+- Ou use outra porta: `uvicorn main:app --port 8001`
+
+### Erro: "Erro ao configurar a API do Gemini"
+- Verifique se a chave está correta
+- Confirme que a chave não expirou
+
+## 📚 Documentação Adicional
+
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Google Generative AI](https://ai.google.dev/)
+
+---
+
+**Desenvolvido para a Global Solution**
