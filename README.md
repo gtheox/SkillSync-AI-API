@@ -137,40 +137,26 @@ var matches = await response.Content.ReadFromJsonAsync<MatchResponse>();
 
 ## 🌐 Deploy
 
-**📚 Tutorial completo**: Veja [DEPLOY_TUTORIAL.md](./DEPLOY_TUTORIAL.md) para instruções detalhadas.
+### Render.com
 
-### Render.com (Recomendado - Gratuito)
-
-1. **Crie conta no Render.com**: https://render.com
-2. **Conecte seu repositório GitHub**
-3. **Crie um novo Web Service** com:
+1. Conecte seu repositório GitHub
+2. Crie um novo **Web Service**
+3. Configure:
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables**: Adicione `GOOGLE_AI_KEY` com sua chave
-4. **Deploy automático**: Render fará o deploy automaticamente
-
-**URL de exemplo após deploy:**
-```
-https://skillsync-ai-api.onrender.com
-```
-
-**⚠️ Nota**: No plano gratuito do Render, o serviço "dorme" após 15min de inatividade. A primeira requisição pode demorar 30-60s para "acordar".
-
-### Alternativas
-
-- **Railway**: https://railway.app (não "dorme", mais rápido)
-- **Fly.io**: https://fly.io (boa performance, requer CLI)
+   - **Environment Variables**: Adicione `GOOGLE_AI_KEY`
 
 ## 📝 Estrutura do Projeto
 
 ```
 IA/
 ├── main.py              # Código principal da API
-├── requirements.txt     # Dependências
-├── .env.example        # Exemplo de variáveis
-├── .env                # Suas variáveis (não commitado)
-├── test_api.py         # Script de teste
-└── README.md           # Este arquivo
+├── requirements.txt     # Dependências Python
+├── .env.example        # Template de variáveis de ambiente
+├── .env                # Variáveis de ambiente (configurar localmente)
+├── test_api.py         # Script de teste da API
+├── .gitignore          # Arquivos ignorados pelo Git
+└── README.md           # Documentação
 ```
 
 ## ⚠️ Troubleshooting
