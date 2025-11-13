@@ -13,6 +13,14 @@ API REST que recebe um projeto e uma lista de perfis de freelancers, retornando 
 - **Justificativa** detalhada da análise
 - **Ordenação** automática por melhor match
 
+## 👨‍💻 Desenvolvedores
+
+| Nome                           | RM     | GitHub                                          |
+| ------------------------------ | ------ | ----------------------------------------------- |
+| Gabriel Teodoro Gonçalves Rosa | 555962 | [gtheox](https://github.com/gtheox)             |
+| Luka Shibuya                   | 558123 | [lukashibuya](https://github.com/lukashibuya)   |
+| Eduardo Giovannini             | 555030 | [DuGiovannini](https://github.com/DuGiovannini) |
+
 ## 🌐 API em Produção
 
 **A API está deployada e disponível online. Use diretamente sem instalação:**
