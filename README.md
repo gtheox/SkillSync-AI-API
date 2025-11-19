@@ -249,6 +249,12 @@ IA/
 - Verifique se a chave está correta
 - Confirme que a chave não expirou
 
+## 🎥 Vídeo de Apresentação
+
+📹 **[Assista ao vídeo de demonstração](https://youtu.be/NBnWwr5bF-M)**
+
+[![Assista ao vídeo](https://img.youtube.com/vi/NBnWwr5bF-M/0.jpg)](https://youtu.be/NBnWwr5bF-M)
+
 ## 📚 Documentação Adicional
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
